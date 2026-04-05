@@ -5,7 +5,6 @@ import { ExamQuestion } from "@/types";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
-import { v4 as uuidv4 } from "crypto";
 
 function genId() {
   return Math.random().toString(36).substr(2, 9);
