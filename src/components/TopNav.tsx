@@ -8,7 +8,7 @@ interface Props {
   onMenuClick: () => void;
 }
 
-export function TopNav({ onMenuClick, hideMenu }: Props) {
+export function TopNav({ onMenuClick }: Props) {
   const settings = useAppSettings();
   const { dark, toggle } = useTheme();
   const isMobile = useIsMobile();
