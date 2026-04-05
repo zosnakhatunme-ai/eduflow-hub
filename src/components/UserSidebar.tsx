@@ -64,7 +64,7 @@ export function UserSidebar({ open, onClose }: Props) {
           ) : (
             <img src="/logo.jpg" alt="" className="h-8 w-8 rounded-lg object-contain" />
           )}
-          <h2 className="font-semibold text-foreground">{settings.appName || "Darpan Academy"}</h2>
+          <h2 className="font-semibold text-foreground">{settings.appName || "LMS"}</h2>
           <button onClick={onClose} className="ml-auto"><X className="h-5 w-5 text-muted-foreground" /></button>
         </div>
 
