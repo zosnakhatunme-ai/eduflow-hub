@@ -179,9 +179,6 @@ export function UserSidebar({ open, onClose }: Props) {
       </div>
     </>
   );
-      </div>
-    </>
-  );
 }
 
 function SidebarLink({ to, icon: Icon, label, onClick, highlight }: { to: string; icon: any; label: string; onClick: () => void; highlight?: boolean }) {
