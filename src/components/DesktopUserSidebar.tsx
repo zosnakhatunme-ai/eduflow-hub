@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, User, MessageCircle, Share2, Download, Sun, Moon, ExternalLink, FolderOpen, ClipboardList, Calendar, Globe, Heart, Lock, School } from "lucide-react";
+import { Home, User, MessageCircle, Share2, Download, Sun, Moon, ExternalLink, FolderOpen, ClipboardList, Calendar, Globe, Heart, Lock, PlaySquare } from "lucide-react";
 import { useAppSettings } from "@/contexts/AppSettingsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/use-theme";
@@ -55,7 +55,7 @@ export function DesktopUserSidebar() {
         {/* Main Menu — Exams সবসময় দেখাবে */}
         <p className="px-3 py-1.5 text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Menu</p>
         <SidebarLink to="/home"      icon={Home}          label="Home"      active={isActive("/home") || isActive("/")} />
-        <SidebarLink to="/classroom" icon={School}        label="Classroom" active={isActive("/classroom")} />
+        <SidebarLink to="/content" icon={PlaySquare}    label="Content" active={isActive("/content")} />
         <SidebarLink to="/exams"     icon={ClipboardList} label="Exams"     active={isActive("/exams")} />
         <SidebarLink to="/profile"   icon={User}          label="Profile"   active={isActive("/profile")} />
 
@@ -166,15 +166,6 @@ export function DesktopUserSidebar() {
           </button>
         )}
 
-        {/* Developer credit */}
-        <div className="my-2 border-t border-border" />
-        <a href="https://ridoan-zisan.netlify.app" target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent/80 transition-colors w-full">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-            <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
-          </svg>
-          Md Ridoan Mahmud Zisan
-        </a>
       </nav>
     </aside>
   );

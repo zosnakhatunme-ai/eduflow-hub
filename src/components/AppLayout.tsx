@@ -18,15 +18,15 @@ export function AppLayout() {
   // Hide all navigation when taking an exam
   const isExamActive = /^\/exams\/[^/]+$/.test(pathname);
 
-  // Desktop user panel: no bottom nav. Admin panel: always bottom nav. Mobile: always bottom nav.
+  // Show bottom nav on mobile always (except exam), on desktop for admin
   const showBottomNav = (isMobile || isAdmin) && !isExamActive;
 
   // Show desktop sidebar for user on non-video pages
   const isVideoPage = pathname.startsWith("/video/");
   const showDesktopSidebar = !isMobile && !isAdmin && !isVideoPage && !isExamActive;
 
-  // Hide hamburger menu on pages that already have a visible sidebar
-  const hasVisibleSidebar = (!isMobile && isAdmin && !isExamActive) || showDesktopSidebar;
+  // Hide hamburger when desktop sidebar is visible
+  const hasVisibleSidebar = showDesktopSidebar || (!isMobile && isAdmin && !isExamActive);
 
   if (isExamActive) {
     return (
@@ -54,7 +54,7 @@ export function AppLayout() {
         </>
       ) : (
         <>
-          <UserSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          {isMobile && <UserSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
           <div className="flex flex-1">
             {showDesktopSidebar && <DesktopUserSidebar />}
             <main className={`flex-1 overflow-x-hidden ${showBottomNav ? "pb-16" : ""}`}>
@@ -64,7 +64,7 @@ export function AppLayout() {
         </>
       )}
 
-      {showBottomNav && <BottomNav onMoreClick={() => setSidebarOpen(true)} />}
+      {showBottomNav && <BottomNav />}
     </div>
   );
 }

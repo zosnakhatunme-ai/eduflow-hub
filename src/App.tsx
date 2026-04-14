@@ -48,8 +48,8 @@ const App = () => (
                 <Route path="/home" element={<HomePage />} />
                 <Route path="/course/:courseId" element={<CourseDetailsPage />} />
                 <Route path="/auth" element={<AuthPage />} />
-                <Route path="/classroom" element={<MyCoursesPage />} />
-                <Route path="/classroom/:courseId" element={<CourseContentPage />} />
+                <Route path="/content" element={<MyCoursesPage />} />
+                <Route path="/content/:courseId" element={<CourseContentPage />} />
                 <Route path="/video/:videoId" element={<VideoPlayerPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/exams" element={<ExamListPage />} />

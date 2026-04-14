@@ -215,7 +215,7 @@ export default function CourseDetailsPage() {
           {/* Enroll / Start CTA */}
           <div className="pt-2 pb-4">
             {isEnrolled && isApproved ? (
-              <Link to="/classroom" className="block w-full text-center px-6 py-3.5 text-sm font-semibold rounded-xl bg-success text-success-foreground shadow-sm hover:opacity-90 transition-opacity">
+              <Link to="/content" className="block w-full text-center px-6 py-3.5 text-sm font-semibold rounded-xl bg-success text-success-foreground shadow-sm hover:opacity-90 transition-opacity">
                 ✅ Start Course
               </Link>
             ) : isPending ? (
