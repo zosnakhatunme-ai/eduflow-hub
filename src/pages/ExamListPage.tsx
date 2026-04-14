@@ -44,20 +44,34 @@ export default function ExamListPage() {
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
-    if (!userDoc?.activeCourseId) { setLoading(false); return; }
+    // Wait until auth is resolved
+    if (authLoading) return;
+
+    if (!userDoc?.activeCourseId) {
+      setLoading(false);
+      return;
+    }
+
     const fetchExams = async () => {
       setLoading(true);
       try {
-        const list = await getCachedCollection<Exam>(examDb, "exams", [where("courseId", "==", userDoc.activeCourseId)], `course_${userDoc.activeCourseId}`);
+        const list = await getCachedCollection<Exam>(
+          examDb,
+          "exams",
+          [where("courseId", "==", userDoc.activeCourseId)],
+          `course_${userDoc.activeCourseId}`
+        );
         list.sort((a, b) => (b.startTime?.toMillis?.() || 0) - (a.startTime?.toMillis?.() || 0));
         setExams(list);
       } catch (err) {
         console.error("Error fetching exams:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
+
     fetchExams();
-  }, [userDoc?.activeCourseId]);
+  }, [authLoading, userDoc?.activeCourseId]);
 
   const now = Date.now();
 
