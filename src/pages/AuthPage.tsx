@@ -58,7 +58,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (user && userDoc) {
       if (userDoc.role === "admin") navigate("/admin");
-      else if (!courseId) navigate("/classroom");
+      else if (!courseId) navigate("/content");
     }
   }, [user, userDoc]);
 
