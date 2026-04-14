@@ -35,52 +35,33 @@ export default function AdminExamsPage() {
 
   const fetchExams = async () => {
     setLoading(true);
-    try {
-      const snap = await getDocs(collection(examDb, "exams"));
-      setExams(snap.docs.map(d => ({ id: d.id, ...d.data() } as Exam)));
-    } catch (err) {
-      console.error("Error fetching exams:", err);
-      toast.error("Failed to load exams");
-    } finally {
-      setLoading(false);
-    }
+    const snap = await getDocs(collection(examDb, "exams"));
+    setExams(snap.docs.map(d => ({ id: d.id, ...d.data() } as Exam)));
+    setLoading(false);
   };
 
   const fetchCourses = async () => {
-    try {
-      const snap = await getDocs(collection(db, "courses"));
-      setCourses(snap.docs.map(d => ({ id: d.id, ...d.data() } as Course)));
-    } catch (err) {
-      console.error("Error fetching courses:", err);
-    }
+    const snap = await getDocs(collection(db, "courses"));
+    setCourses(snap.docs.map(d => ({ id: d.id, ...d.data() } as Course)));
   };
 
   useEffect(() => { fetchExams(); fetchCourses(); }, []);
 
   const handleDelete = async (id: string) => {
-    try {
-      await deleteDoc(doc(examDb, "exams", id));
-      toast.success("Exam deleted");
-      fetchExams();
-    } catch (err: any) {
-      toast.error("Delete failed: " + err.message);
-    }
+    await deleteDoc(doc(examDb, "exams", id));
+    toast.success("Exam deleted");
+    fetchExams();
   };
 
   const viewResults = async (exam: Exam) => {
     setResultsExam(exam);
     setGradingSubmission(null);
-    try {
-      const snap = await getDocs(collection(examDb, "submissions"));
-      const subs = snap.docs
-        .map(d => ({ id: d.id, ...d.data() } as ExamSubmission))
-        .filter(s => s.examId === exam.id)
-        .sort((a, b) => b.obtainedMarks - a.obtainedMarks);
-      setSubmissions(subs);
-    } catch (err) {
-      console.error("Error fetching submissions:", err);
-      toast.error("Failed to load results");
-    }
+    const snap = await getDocs(collection(examDb, "submissions"));
+    const subs = snap.docs
+      .map(d => ({ id: d.id, ...d.data() } as ExamSubmission))
+      .filter(s => s.examId === exam.id)
+      .sort((a, b) => b.obtainedMarks - a.obtainedMarks);
+    setSubmissions(subs);
     setActiveTab("results");
   };
 
@@ -183,6 +164,7 @@ export default function AdminExamsPage() {
     if (w) { w.document.write(html); w.document.close(); w.onload = () => w.print(); }
   };
 
+  // Download exam questions & answers as organized PDF
   const downloadQuestionsPDF = (exam: Exam) => {
     let html = `<html><head><meta charset="utf-8"><title>${exam.title} - Questions & Answers</title>
     <style>
@@ -206,27 +188,39 @@ export default function AdminExamsPage() {
     exam.questions.forEach((q, idx) => {
       html += `<div class="question">`;
       html += `<div class="q-header">Q${idx + 1}. ${q.questionText} <span class="q-type">${q.type === "mcq" ? "MCQ" : "Written"} • ${q.marks} marks</span></div>`;
-      if (q.questionImage) html += `<img src="${q.questionImage}" alt="Question Image" />`;
+      
+      if (q.questionImage) {
+        html += `<img src="${q.questionImage}" alt="Question Image" />`;
+      }
+
       if (q.type === "mcq" && q.options) {
         q.options.forEach((opt, oIdx) => {
           const isCorrect = oIdx === q.correctAnswer;
           html += `<div class="option ${isCorrect ? 'correct' : 'wrong'}">${String.fromCharCode(65 + oIdx)}) ${opt.text} ${isCorrect ? '✓' : ''}</div>`;
-          if (opt.image) html += `<img src="${opt.image}" alt="Option" style="max-height:80px;margin-left:20px" />`;
+          if (opt.image) {
+            html += `<img src="${opt.image}" alt="Option" style="max-height:80px;margin-left:20px" />`;
+          }
         });
         html += `<div class="answer-label">Correct Answer:</div>`;
         html += `<div class="answer-text">${String.fromCharCode(65 + (q.correctAnswer || 0))}) ${q.options[q.correctAnswer || 0]?.text || ''}</div>`;
       }
+
       if (q.type === "written") {
         html += `<div class="answer-label">Model Answer:</div>`;
         if (q.writtenAnswer) {
-          if (q.writtenAnswer.startsWith("http")) html += `<img src="${q.writtenAnswer}" alt="Answer" />`;
-          else html += `<div class="answer-text">${q.writtenAnswer}</div>`;
+          if (q.writtenAnswer.startsWith("http")) {
+            html += `<img src="${q.writtenAnswer}" alt="Answer" />`;
+          } else {
+            html += `<div class="answer-text">${q.writtenAnswer}</div>`;
+          }
         } else {
           html += `<div class="answer-text" style="color:#999">No model answer provided</div>`;
         }
       }
+
       html += `</div>`;
     });
+
     html += `</body></html>`;
     const w = window.open('', '_blank');
     if (w) { w.document.write(html); w.document.close(); w.onload = () => w.print(); }
@@ -304,26 +298,20 @@ export default function AdminExamsPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mt-3">
-                          <label className="text-xs text-muted-foreground">Marks ({q.marks} max):</label>
+                          <label className="text-xs font-medium text-muted-foreground">Marks:</label>
                           <input
                             type="number"
                             min={0}
                             max={q.marks}
-                            step={0.5}
                             value={writtenMarks[q.id] ?? ""}
-                            onChange={e => setWrittenMarks(prev => ({ ...prev, [q.id]: parseFloat(e.target.value) || 0 }))}
-                            className="w-20 px-2 py-1 rounded-lg bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            onChange={e => setWrittenMarks(prev => ({ ...prev, [q.id]: Number(e.target.value) }))}
+                            className="w-20 px-2 py-1.5 rounded-lg bg-background border border-border text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30"
                           />
+                          <span className="text-xs text-muted-foreground">/ {q.marks}</span>
                         </div>
-                        {q.writtenAnswer?.startsWith("http") && (
-                          <div className="mt-2">
-                            <p className="text-xs text-muted-foreground mb-1">Model Answer:</p>
-                            <img src={q.writtenAnswer} alt="Model answer" className="max-h-48 rounded-lg object-contain border border-green-300/50 dark:border-green-800/40" onClick={() => setPreviewImage(q.writtenAnswer!)} />
-                          </div>
-                        )}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground italic">No image submitted</p>
+                      <p className="text-xs text-muted-foreground italic">No answer submitted</p>
                     )}
                   </div>
                 )}
@@ -332,106 +320,131 @@ export default function AdminExamsPage() {
           })}
         </div>
 
-        <div className="flex gap-2 mt-4">
-          <button onClick={saveGrading} disabled={savingGrade}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium disabled:opacity-50">
-            <Save className="h-4 w-4" /> {savingGrade ? "Saving..." : "Save Grades"}
-          </button>
-          <button onClick={() => setGradingSubmission(null)} className="px-4 py-2 bg-accent border border-border rounded-xl text-sm text-foreground">
-            Cancel
-          </button>
-        </div>
+        <button onClick={saveGrading} disabled={savingGrade} className="w-full mt-4 py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50">
+          <Save className="h-4 w-4" /> {savingGrade ? "Saving..." : "Save Grades"}
+        </button>
+
         <ImagePreviewDialog src={previewImage} onClose={() => setPreviewImage(null)} />
       </div>
     );
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto animate-fade-in">
+    <div className="p-4 max-w-4xl mx-auto animate-fade-in">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-semibold text-foreground">Exam Management</h1>
+        <button onClick={() => navigate("/admin/exams/add")} className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
+          <Plus className="h-4 w-4" /> Create
+        </button>
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => exportExams(filteredExams)} className="flex items-center gap-1.5 px-3 py-1.5 bg-card border border-border rounded-lg text-xs font-medium text-foreground hover:bg-accent">
+          <Download className="h-3 w-3" /> Export {filterCourse ? "Filtered" : "All"}
+        </button>
+        <label className="flex items-center gap-1.5 px-3 py-1.5 bg-card border border-border rounded-lg text-xs font-medium text-foreground hover:bg-accent cursor-pointer">
+          <Upload className="h-3 w-3" /> Import
+          <input type="file" accept=".json" onChange={handleImportExams} className="hidden" />
+        </label>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="flex items-center justify-between mb-4">
-          <TabsList>
-            <TabsTrigger value="exams">Exams</TabsTrigger>
-            <TabsTrigger value="results">Results</TabsTrigger>
-          </TabsList>
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-1.5 px-3 py-1.5 bg-accent border border-border rounded-lg text-xs font-medium text-foreground cursor-pointer hover:bg-accent/80">
-              <Upload className="h-3.5 w-3.5" /> Import
-              <input type="file" accept=".json" className="hidden" onChange={handleImportExams} />
-            </label>
-            <button
-              onClick={() => exportExams(exams)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-accent border border-border rounded-lg text-xs font-medium text-foreground hover:bg-accent/80"
-            >
-              <Download className="h-3.5 w-3.5" /> Export All
-            </button>
-            <button
-              onClick={() => navigate("/admin/exams/add")}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add Exam
-            </button>
-          </div>
-        </div>
+        <TabsList className="w-full mb-4">
+          <TabsTrigger value="exams" className="flex-1">Exams</TabsTrigger>
+          <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>
+        </TabsList>
 
         <TabsContent value="exams">
-          <div className="mb-3">
-            <select value={filterCourse} onChange={e => setFilterCourse(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg bg-card border border-border text-foreground text-sm">
-              <option value="">All Courses</option>
-              {courses.map(c => <option key={c.id} value={c.id}>{c.courseName}</option>)}
-            </select>
-          </div>
+          <select value={filterCourse} onChange={e => setFilterCourse(e.target.value)} className="w-full px-4 py-2.5 rounded-lg bg-card border border-border text-foreground text-sm mb-4">
+            <option value="">All Courses</option>
+            {courses.map(c => <option key={c.id} value={c.id}>{c.courseName}</option>)}
+          </select>
 
           {loading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="bg-card border border-border rounded-xl p-4 animate-pulse">
-                  <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
-                </div>
-              ))}
-            </div>
+            <p className="text-muted-foreground text-sm text-center py-8">Loading...</p>
           ) : paginatedExams.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No exams found</p>
+            <p className="text-muted-foreground text-sm text-center py-8">No exams yet</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {paginatedExams.map(exam => {
-                const now = Date.now();
-                const start = exam.startTime?.toMillis?.() || 0;
-                const end = exam.endTime?.toMillis?.() || 0;
-                const status = now < start ? "upcoming" : now <= end ? "live" : "ended";
-                const statusConfig = {
-                  live: { label: "Live", cls: "bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30" },
-                  upcoming: { label: "Upcoming", cls: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20" },
-                  ended: { label: "Ended", cls: "bg-accent text-muted-foreground border border-border" },
-                }[status];
+                const startTime = formatTime12(exam.startTime?.toDate?.());
+                const endTime = formatTime12(exam.endTime?.toDate?.());
+                const typeLabel = getExamTypeLabel(exam);
+                const typeColor =
+                  typeLabel === "MCQ + Written"
+                    ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                    : typeLabel === "Written"
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    : "bg-blue-500/10 text-blue-600 dark:text-blue-400";
 
                 return (
-                  <div key={exam.id} className="bg-card border border-border rounded-xl p-3">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground leading-snug">{exam.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{exam.courseName} • {getExamTypeLabel(exam)} • {exam.questions?.length || 0} Q • {exam.totalMarks} marks • {exam.duration} min</p>
-                        {exam.startTime?.toDate && (
-                          <p className="text-[11px] text-muted-foreground mt-0.5">🗓 {formatTime12(exam.startTime.toDate())}</p>
+                  <div key={exam.id} className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+                    {/* Card Header */}
+                    <div className="px-4 pt-4 pb-3">
+                      <div className="flex flex-wrap items-start gap-2 mb-1.5">
+                        <h3 className="font-semibold text-foreground text-sm leading-snug flex-1 min-w-0">
+                          {exam.title}
+                        </h3>
+                        <span
+                          className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            exam.resultPublished
+                              ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {exam.resultPublished ? "✓ Published" : "Unpublished"}
+                        </span>
+                      </div>
+
+                      {/* Course name */}
+                      <p className="text-xs text-muted-foreground mb-3 truncate">{exam.courseName}</p>
+
+                      {/* Info Chips */}
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${typeColor}`}>
+                          {typeLabel}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-accent text-foreground">
+                          {exam.questions?.length || 0} প্রশ্ন
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-accent text-foreground">
+                          {exam.totalMarks} নম্বর
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-accent text-foreground">
+                          ⏱ {exam.duration} মিনিট
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+                          পাস: {exam.passMark || 0}
+                        </span>
+                        {(exam.negativeMark ?? 0) > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-500/10 text-red-500">
+                            −{exam.negativeMark} নেগেটিভ
+                          </span>
                         )}
                       </div>
-                      <span className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusConfig.cls}`}>
-                        {statusConfig.label}
-                      </span>
+
+                      {/* Time Range */}
+                      {(startTime || endTime) && (
+                        <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                          <span className="shrink-0">🕐</span>
+                          <span className="truncate">
+                            {startTime}
+                            {endTime && <> &rarr; {endTime}</>}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      {/* Publish toggle */}
+                    {/* Action Bar */}
+                    <div className="flex items-center justify-between gap-1 px-3 py-2 border-t border-border bg-accent/30">
+                      {/* Left: Publish toggle */}
                       <button
                         onClick={async () => {
-                          try {
-                            await updateDoc(doc(examDb, "exams", exam.id), { resultPublished: !exam.resultPublished });
-                            setExams(prev => prev.map(e => e.id === exam.id ? { ...e, resultPublished: !e.resultPublished } : e));
-                            toast.success(exam.resultPublished ? "Result unpublished" : "Result published");
-                          } catch (err: any) { toast.error(err.message); }
+                          await updateDoc(doc(examDb, "exams", exam.id), { resultPublished: !exam.resultPublished });
+                          toast.success(exam.resultPublished ? "Result unpublished" : "Result published");
+                          fetchExams();
                         }}
+                        title={exam.resultPublished ? "Unpublish Result" : "Publish Result"}
                         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
                           exam.resultPublished
                             ? "bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20"
