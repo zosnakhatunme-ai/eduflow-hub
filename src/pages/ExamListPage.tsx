@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { where } from "firebase/firestore";
 import { examDb } from "@/lib/examFirebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,70 +7,23 @@ import { getCachedCollection } from "@/lib/firestoreCache";
 import { Link } from "react-router-dom";
 import { Clock, CheckCircle, AlertCircle, BookOpen } from "lucide-react";
 import { FloatingButtons } from "@/components/FloatingButtons";
-import { Skeleton } from "@/components/ui/skeleton";
-
-function ExamCardSkeleton() {
-  return (
-    <div className="bg-card border border-border rounded-2xl overflow-hidden">
-      <div className="p-4 space-y-3">
-        <div className="flex items-start justify-between gap-2">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-5 w-16 rounded-full" />
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          <Skeleton className="h-5 w-14 rounded-full" />
-          <Skeleton className="h-5 w-16 rounded-full" />
-          <Skeleton className="h-5 w-16 rounded-full" />
-          <Skeleton className="h-5 w-20 rounded-full" />
-        </div>
-        <Skeleton className="h-3 w-32" />
-      </div>
-    </div>
-  );
-}
 
 export default function ExamListPage() {
-  const { user, userDoc, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
+  const { userDoc } = useAuth();
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Auth redirect
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth?mode=login");
-    }
-  }, [authLoading, user, navigate]);
-
-  useEffect(() => {
-    // Wait until auth is resolved
-    if (authLoading) return;
-
-    if (!userDoc?.activeCourseId) {
-      setLoading(false);
-      return;
-    }
-
+    if (!userDoc?.activeCourseId) return;
     const fetchExams = async () => {
       setLoading(true);
-      try {
-        const list = await getCachedCollection<Exam>(
-          examDb,
-          "exams",
-          [where("courseId", "==", userDoc.activeCourseId)],
-          `course_${userDoc.activeCourseId}`
-        );
-        list.sort((a, b) => (b.startTime?.toMillis?.() || 0) - (a.startTime?.toMillis?.() || 0));
-        setExams(list);
-      } catch (err) {
-        console.error("Error fetching exams:", err);
-      } finally {
-        setLoading(false);
-      }
+      const list = await getCachedCollection<Exam>(examDb, "exams", [where("courseId", "==", userDoc.activeCourseId)], `course_${userDoc.activeCourseId}`);
+      list.sort((a, b) => (b.startTime?.toMillis?.() || 0) - (a.startTime?.toMillis?.() || 0));
+      setExams(list);
+      setLoading(false);
     };
-
     fetchExams();
-  }, [authLoading, userDoc?.activeCourseId]);
+  }, [userDoc?.activeCourseId]);
 
   const now = Date.now();
 
@@ -82,17 +34,6 @@ export default function ExamListPage() {
     if (now >= start && now <= end) return "live";
     return "ended";
   };
-
-  if (authLoading || (!user && !authLoading)) {
-    return (
-      <div className="p-4 max-w-2xl mx-auto">
-        <Skeleton className="h-6 w-32 mb-4" />
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => <ExamCardSkeleton key={i} />)}
-        </div>
-      </div>
-    );
-  }
 
   if (!userDoc?.activeCourseId) {
     return (
@@ -109,9 +50,7 @@ export default function ExamListPage() {
       </h1>
 
       {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => <ExamCardSkeleton key={i} />)}
-        </div>
+        <p className="text-muted-foreground text-sm text-center py-8">Loading...</p>
       ) : exams.length === 0 ? (
         <p className="text-muted-foreground text-sm text-center py-8">No exams available for this course.</p>
       ) : (
@@ -135,11 +74,13 @@ export default function ExamListPage() {
                 to={`/exams/${exam.id}`}
                 className="block bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-200 group"
               >
+                {/* Status strip */}
                 {status === "live" && (
                   <div className="h-1 bg-gradient-to-r from-green-400 to-emerald-500" />
                 )}
 
                 <div className="p-4">
+                  {/* Top row: title + status */}
                   <div className="flex items-start justify-between gap-2 mb-2.5">
                     <h3 className="font-semibold text-foreground text-sm leading-snug flex-1 min-w-0 group-hover:text-primary transition-colors">
                       {exam.title}
@@ -150,6 +91,7 @@ export default function ExamListPage() {
                     </span>
                   </div>
 
+                  {/* Info chips */}
                   <div className="flex flex-wrap gap-1.5 mb-3">
                     <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                       {typeLabel}
@@ -165,6 +107,7 @@ export default function ExamListPage() {
                     </span>
                   </div>
 
+                  {/* Date */}
                   {startDateStr && (
                     <p className="text-[11px] text-muted-foreground flex items-center gap-1">
                       🗓 {startDateStr}
