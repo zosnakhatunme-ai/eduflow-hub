@@ -250,7 +250,26 @@ export default function ExamTakePage() {
 
   const handleSubmit = handleSubmitInternal;
 
-  if (loading) return <div className="p-4 text-center text-muted-foreground text-sm py-8">Loading...</div>;
+  // Require login
+  if (!user) {
+    navigate("/auth?mode=login");
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="p-4 max-w-lg mx-auto space-y-4 animate-fade-in">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-40 w-full rounded-xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </div>
+    );
+  }
   if (!exam) return <div className="p-4 text-center text-muted-foreground text-sm py-8">Exam not found</div>;
 
   if (examEntered && !existingSubmission && !started && !submitted) {

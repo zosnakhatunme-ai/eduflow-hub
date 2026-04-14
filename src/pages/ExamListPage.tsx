@@ -4,14 +4,43 @@ import { examDb } from "@/lib/examFirebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Exam } from "@/types/exam";
 import { getCachedCollection } from "@/lib/firestoreCache";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Clock, CheckCircle, AlertCircle, BookOpen } from "lucide-react";
 import { FloatingButtons } from "@/components/FloatingButtons";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function ExamCardSkeleton() {
+  return (
+    <div className="bg-card border border-border rounded-2xl overflow-hidden">
+      <div className="p-4 space-y-3">
+        <div className="flex items-start justify-between gap-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+        </div>
+        <div className="flex gap-1.5">
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-5 w-14 rounded-full" />
+          <Skeleton className="h-5 w-14 rounded-full" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+        </div>
+        <Skeleton className="h-3 w-28" />
+      </div>
+    </div>
+  );
+}
 
 export default function ExamListPage() {
-  const { userDoc } = useAuth();
+  const { user, userDoc } = useAuth();
+  const navigate = useNavigate();
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Require login
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth?mode=login");
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!userDoc?.activeCourseId) return;
@@ -24,6 +53,8 @@ export default function ExamListPage() {
     };
     fetchExams();
   }, [userDoc?.activeCourseId]);
+
+  if (!user) return null;
 
   const now = Date.now();
 
@@ -50,7 +81,11 @@ export default function ExamListPage() {
       </h1>
 
       {loading ? (
-        <p className="text-muted-foreground text-sm text-center py-8">Loading...</p>
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <ExamCardSkeleton key={i} />
+          ))}
+        </div>
       ) : exams.length === 0 ? (
         <p className="text-muted-foreground text-sm text-center py-8">No exams available for this course.</p>
       ) : (
@@ -63,9 +98,9 @@ export default function ExamListPage() {
             const startDateStr = exam.startTime?.toDate?.()?.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' });
 
             const statusConfig = {
-              live: { label: "Live", icon: <AlertCircle className="h-3 w-3" />, cls: "bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30", dot: "bg-green-500 animate-pulse" },
-              upcoming: { label: "Upcoming", icon: <Clock className="h-3 w-3" />, cls: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20", dot: "bg-blue-400" },
-              ended: { label: "Ended", icon: <CheckCircle className="h-3 w-3" />, cls: "bg-accent text-muted-foreground border border-border", dot: "bg-muted-foreground" },
+              live: { label: "Live", icon: <AlertCircle className="h-3 w-3" />, cls: "bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30" },
+              upcoming: { label: "Upcoming", icon: <Clock className="h-3 w-3" />, cls: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20" },
+              ended: { label: "Ended", icon: <CheckCircle className="h-3 w-3" />, cls: "bg-accent text-muted-foreground border border-border" },
             }[status];
 
             return (
@@ -74,13 +109,10 @@ export default function ExamListPage() {
                 to={`/exams/${exam.id}`}
                 className="block bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-200 group"
               >
-                {/* Status strip */}
                 {status === "live" && (
                   <div className="h-1 bg-gradient-to-r from-green-400 to-emerald-500" />
                 )}
-
                 <div className="p-4">
-                  {/* Top row: title + status */}
                   <div className="flex items-start justify-between gap-2 mb-2.5">
                     <h3 className="font-semibold text-foreground text-sm leading-snug flex-1 min-w-0 group-hover:text-primary transition-colors">
                       {exam.title}
@@ -90,28 +122,16 @@ export default function ExamListPage() {
                       {statusConfig.label}
                     </span>
                   </div>
-
-                  {/* Info chips */}
                   <div className="flex flex-wrap gap-1.5 mb-3">
-                    <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                      {typeLabel}
-                    </span>
-                    <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-accent text-foreground">
-                      {exam.questions.length} প্রশ্ন
-                    </span>
-                    <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-accent text-foreground">
-                      {exam.totalMarks} নম্বর
-                    </span>
+                    <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">{typeLabel}</span>
+                    <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-accent text-foreground">{exam.questions.length} প্রশ্ন</span>
+                    <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-accent text-foreground">{exam.totalMarks} নম্বর</span>
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-accent text-foreground">
                       <Clock className="h-3 w-3" /> {exam.duration} মিনিট
                     </span>
                   </div>
-
-                  {/* Date */}
                   {startDateStr && (
-                    <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                      🗓 {startDateStr}
-                    </p>
+                    <p className="text-[11px] text-muted-foreground flex items-center gap-1">🗓 {startDateStr}</p>
                   )}
                 </div>
               </Link>
