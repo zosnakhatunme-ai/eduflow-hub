@@ -6,9 +6,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Props {
   onMenuClick: () => void;
+  hideMenu?: boolean;
 }
 
-export function TopNav({ onMenuClick }: Props) {
+export function TopNav({ onMenuClick, hideMenu }: Props) {
   const settings = useAppSettings();
   const { dark, toggle } = useTheme();
   const isMobile = useIsMobile();
@@ -28,13 +29,15 @@ export function TopNav({ onMenuClick }: Props) {
     <header className="sticky top-0 z-40 bg-background border-b border-border">
       <div className="flex items-center justify-between h-14 px-4">
         <div className="flex items-center gap-3">
-          <button onClick={onMenuClick} className="text-foreground">
-            <Menu className="h-5 w-5" />
-          </button>
+          {!hideMenu && (
+            <button onClick={onMenuClick} className="text-foreground">
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
           {settings.appLogo && (
             <img src={settings.appLogo} alt="" className="h-7 w-7 rounded-md object-contain" />
           )}
-          <h1 className="text-lg font-semibold text-foreground">{settings.appName || "LMS"}</h1>
+          <h1 className="text-lg font-semibold text-foreground">{settings.appName || "Darpan Academy"}</h1>
         </div>
         <div className="flex items-center gap-1">
           {installPrompt && (
